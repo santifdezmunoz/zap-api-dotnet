@@ -1,133 +1,116 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
+namespace OWASPZAPDotNetAPI.Tests;
 
-namespace OWASPZAPDotNetAPI.Tests
+public class ClientApiTests : IDisposable
 {
-    [TestClass]
-    public class ClientApiTests
+    private ClientApi zap;
+    public ClientApiTests()
     {
-        private ClientApi zap;
+        zap = new ClientApi("127.0.0.1", 8090, "on6qbod07ssf92587pme6rd5u8");
+    }
+    public void Dispose()
+    {
+        zap.Dispose();
+    }
 
-        [TestInitialize]
-        public void InstantiateClientApi()
-        {
-            zap = new ClientApi("127.0.0.1", 7070, "on6qbod07ssf92587pme6rd5u8");
-        }
+    [Fact]
+    public void When_CallApi_Is_Called_IApiResponse_IsReturned()
+    {
+        var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
+        Assert.IsAssignableFrom<IApiResponse>(response);
+    }
 
-        [TestCleanup]
-        public void DisposeClientApi()
-        {
-            zap.Dispose();
-        }
+    [Fact]
+    public void When_CallApi_getSupportedAuthenticationMethods_Is_Called_ApiResponseList_IsReturned()
+    {
+        var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
+        Assert.IsAssignableFrom<ApiResponseList>(response);
+    }
 
-        [TestMethod]
-        public void When_CallApi_Is_Called_IApiResponse_IsReturned()
+    [Fact]
+    public void When_CallApi_getSupportedAuthenticationMethods_Is_Called_ApiResponseList_With_formBasedAuthentication_IsReturned()
+    {
+        var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
+        bool formBasedAuthenticationFound = false;
+        ApiResponseList apiResponseList = (ApiResponseList)response;
+        foreach (var item in apiResponseList.List)
         {
-            var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
-            Assert.IsInstanceOfType(response, typeof(IApiResponse));
-        }
-
-        [TestMethod]
-        public void When_CallApi_getSupportedAuthenticationMethods_Is_Called_ApiResponseList_IsReturned()
-        {
-            var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
-            Assert.IsInstanceOfType(response, typeof(ApiResponseList));
-        }
-
-        [TestMethod]
-        public void When_CallApi_getSupportedAuthenticationMethods_Is_Called_ApiResponseList_With_formBasedAuthentication_IsReturned()
-        {
-            var response = zap.CallApi("authentication", "view", "getSupportedAuthenticationMethods", null);
-            bool formBasedAuthenticationFound = false;
-            ApiResponseList apiResponseList = (ApiResponseList)response;            
-            foreach (var item in apiResponseList.List)
+            var apiResponseElement = (ApiResponseElement)item;
+            if (apiResponseElement.Value == "formBasedAuthentication")
             {
-                var apiResponseElement = (ApiResponseElement)item;
-                if (apiResponseElement.Value == "formBasedAuthentication")
-                {
-                    formBasedAuthenticationFound = true;
-                    break;
-                }
-            }
-            Assert.IsTrue(formBasedAuthenticationFound);
-        }
-
-        [TestMethod]
-        public void When_CallApi_alerts_Is_Called_ApiResponseList_Is_Returned()
-        {
-            var response = zap.CallApi("core", "view", "alerts", null);
-            ApiResponseList apiResponseList = (ApiResponseList)response;
-            Assert.IsInstanceOfType(response, typeof(ApiResponseList));
-        }
-
-        [TestMethod]
-        public void When_CallApi_scanners_Is_Called_ApiResponseList_WithApiResponseSet_IsReturned()
-        {
-            var response = zap.CallApi("pscan", "view", "scanners", null);
-            Assert.IsInstanceOfType(response, typeof(ApiResponseList));
-            Assert.IsInstanceOfType(((ApiResponseList)response).List[0], typeof(ApiResponseSet));
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(Exception))]
-        public void When_CallApi_authentication_With_NonExistantMethod_Is_Called_Exception_Thrown()
-        {
-            try
-            {
-                IApiResponse response = zap.CallApi("authentication", "view", "aaaa", null);
-
-            }
-            catch (Exception ex)
-            {
-                StringAssert.Contains(ex.Message, "bad_view");
-                throw;
+                formBasedAuthenticationFound = true;
+                break;
             }
         }
+        Assert.True(formBasedAuthenticationFound);
+    }
 
-        [TestMethod]
-        [ExpectedException(typeof(Exception))]
-        public void When_Api_getForcedUser_With_NonExistantContext_Is_Called_Exception_Thrown()
-        {
-            try
-            {
-                IApiResponse response = zap.forcedUser.getForcedUser("-1");
+    [Fact]
+    public void When_CallApi_alerts_Is_Called_ApiResponseList_Is_Returned()
+    {
+        var response = zap.CallApi("core", "view", "alerts", null);
+        ApiResponseList apiResponseList = (ApiResponseList)response;
+        Assert.IsAssignableFrom<ApiResponseList>(response);
+    }
 
-            }
-            catch (Exception ex)
-            {
-                StringAssert.Contains(ex.Message, "context_not_found");
-                throw;
-            }
-        }
+    [Fact]
+    public void When_CallApi_scanners_Is_Called_ApiResponseList_WithApiResponseSet_IsReturned()
+    {
+        var response = zap.CallApi("pscan", "view", "scanners", null);
+        Assert.IsAssignableFrom<ApiResponseList>(response);
+        Assert.IsAssignableFrom<ApiResponseSet>(((ApiResponseList)response).List[0]);
+    }
 
-        [TestMethod]
-        [ExpectedException(typeof(Exception))]
-        public void When_Api_setMode_With_NonAllowedValue_Is_Called_Exception_Thrown()
-        {
-            try
-            {
-                IApiResponse response = zap.core.setMode("ModeThatDoentExist");
-            }
-            catch (Exception ex)
-            {
-                StringAssert.Contains(ex.Message, "illegal_parameter");
-                throw;
-            }
-        }
+    [Fact]
+    public void When_CallApi_authentication_With_NonExistantMethod_Is_Called_Exception_Thrown()
+    {
+        //arrange
 
-        [TestMethod]
-        public void When_Api_setMode_With_Standard_Is_Called_ApiResponse_OK_Is_Returned()
-        {
-            IApiResponse response = zap.core.setMode("Standard");
-            Assert.AreEqual("OK", ((ApiResponseElement)response).Value);
-        }
+        //act
+        Action act = () => zap.CallApi("authentication", "view", "aaaa", null);
 
-        [TestMethod]
-        public void When_Api_stopAllScans_Is_Called_ApiResponse_OK_Is_Returned()
-        {
-            IApiResponse response = zap.spider.stopAllScans();
-            Assert.AreEqual("OK", ((ApiResponseElement)response).Value);
-        }
+        //assert
+        Exception ex = Assert.Throws<Exception>(act);
+        Assert.StartsWith("bad_view", ex.Message);
+
+    }
+
+    [Fact]
+    public void When_Api_getForcedUser_With_NonExistantContext_Is_Called_Exception_Thrown()
+    {
+        //arrange
+
+        //act
+        Action act = () => zap.forcedUser.getForcedUser("-1");
+
+        //assert
+        Exception ex = Assert.Throws<Exception>(act);
+        Assert.StartsWith("context_not_found", ex.Message);
+    }
+
+    [Fact]
+    public void When_Api_setMode_With_NonAllowedValue_Is_Called_Exception_Thrown()
+    {
+        //arrange
+
+        //act
+        Action act = () => zap.core.setMode("ModeThatDoentExist");
+
+        //assert
+        Exception ex = Assert.Throws<Exception>(act);
+        Assert.StartsWith("illegal_parameter", ex.Message);
+    }
+
+    [Fact]
+    public void When_Api_setMode_With_Standard_Is_Called_ApiResponse_OK_Is_Returned()
+    {
+        IApiResponse response = zap.core.setMode("Standard");
+        Assert.Equal("OK", ((ApiResponseElement)response).Value);
+    }
+
+    [Fact]
+    public void When_Api_stopAllScans_Is_Called_ApiResponse_OK_Is_Returned()
+    {
+        IApiResponse response = zap.spider.stopAllScans();
+        Assert.Equal("OK", ((ApiResponseElement)response).Value);
     }
 }
