@@ -20,32 +20,32 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 
 namespace OWASPZAPDotNetAPI
 {
     class SystemWebClient : IWebClient, IDisposable
     {
-        WebClient webClient;
+        HttpClient httpClient;
         WebProxy webProxy;
 
         public SystemWebClient(string proxyHost, int proxyPort)
         {
             webProxy = new WebProxy(proxyHost, proxyPort);
-            webClient = new WebClient();
-            webClient.Proxy = webProxy;
+            httpClient = new HttpClient(new HttpClientHandler() { Proxy = webProxy, UseProxy = true });
         }
 
         public string DownloadString(string address)
         {
-            return webClient.DownloadString(address);
+            return httpClient.GetStringAsync(address).Result;
         }
 
         public string DownloadString(Uri uri)
         {
-            string retVal = string.Empty; 
+            string retVal = string.Empty;
             try
             {
-                retVal = webClient.DownloadString(uri);
+                retVal = httpClient.GetStringAsync(uri).Result;
             }
             catch (WebException webException)
             {
@@ -67,7 +67,7 @@ namespace OWASPZAPDotNetAPI
             byte[] retVal = default(byte[]);
             try
             {
-                retVal = webClient.DownloadData(uri);
+                retVal = httpClient.GetByteArrayAsync(uri).Result;
             }
             catch (WebException)
             {
@@ -78,22 +78,26 @@ namespace OWASPZAPDotNetAPI
 
         public void Dispose()
         {
-            webClient.Dispose();
+            httpClient.Dispose();
         }
 
         public void AddRequestHeader(string headerName, string headerValue)
         {
-            webClient.Headers.Add(headerName, headerValue);
+            httpClient.DefaultRequestHeaders.Add(headerName, headerValue);
         }
 
         public string GetRequestHeaderValue(string headerName)
         {
-            return webClient.Headers.Get(headerName);
+            return httpClient.DefaultRequestHeaders.GetValues(headerName).ToString();
         }
 
         public void SetRequestHeader(string headerName, string headerValue)
         {
-            webClient.Headers.Set(headerName, headerValue);
+            if (httpClient.DefaultRequestHeaders.Contains(headerName))
+            {
+                httpClient.DefaultRequestHeaders.Remove(headerName);
+            }
+            httpClient.DefaultRequestHeaders.Add(headerName, headerValue);
         }
     }
 }
