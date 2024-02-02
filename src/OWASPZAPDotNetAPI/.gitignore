@@ -279,3 +279,4 @@ FakesAssemblies/
 # docfx
 **/_site
 **/docfx.json
+**/api
