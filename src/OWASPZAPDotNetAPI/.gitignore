@@ -261,3 +261,21 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/modules.xml
+/contentModel.xml
+/.idea.OWASPZAPDotNetAPI.iml
+/projectSettingsUpdater.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+**/.idea
+
+# docfx
+**/_site
+**/docfx.json

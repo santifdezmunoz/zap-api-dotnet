@@ -28,15 +28,15 @@ namespace OWASPZAPDotNetAPI
 {
     public sealed class ClientApi : IDisposable
     {
-        private IWebClient webClient;
+        private IWebClient _webClient;
 
-        private const string apiDomain = "zap";
-        private const int apiPort = 80;
+        private const string ApiDomain = "zap";
+        private const int ApiPort = 80;
 
-        private string apiKey;
-        private string format = "xml";
-        private string otherFormat = "other";
-        private string zapApiKeyHeaderName = "X-ZAP-API-Key";
+        private string _apiKey;
+        private string _format = "xml";
+        private string _otherFormat = "other";
+        private string _zapApiKeyHeaderName = "X-ZAP-API-Key";
         private static string _zapApiKeyParameterName = "apikey";
 
         //New API needs to be added here, preferably in alphabetical order
@@ -47,7 +47,7 @@ namespace OWASPZAPDotNetAPI
         public AlertFilter alertFilter;
         public Ascan ascan;
         public Authentication authentication;
-        public OWASPZAPDotNetAPI.Generated.Authorization authorization;
+        public Authorization authorization;
         public Automation automation;
         public Autoupdate autoupdate;
         public Break brk;
@@ -84,9 +84,9 @@ namespace OWASPZAPDotNetAPI
 
         public ClientApi(string zapAddress, int zapPort, string apiKey)
         {
-            this.apiKey = apiKey;
+            this._apiKey = apiKey;
 
-            webClient = new SystemWebClient(zapAddress, zapPort);
+            _webClient = new SystemWebClient(zapAddress, zapPort);
 
             InitializeApiObjects();
         }
@@ -101,7 +101,7 @@ namespace OWASPZAPDotNetAPI
             alertFilter = new AlertFilter(this);
             ascan = new Ascan(this);
             authentication = new Authentication(this);
-            authorization = new OWASPZAPDotNetAPI.Generated.Authorization(this);
+            authorization = new Authorization(this);
             automation = new Automation(this);
             autoupdate = new Autoupdate(this);
             brk = new Break(this);
@@ -139,7 +139,7 @@ namespace OWASPZAPDotNetAPI
 
         public void AccessUrl(string url)
         {
-            var output = webClient.DownloadString(url);
+            _ = _webClient.DownloadString(url);
         }
 
         public List<Alert> GetAlerts(string baseUrl, int start, int count, string riskId)
@@ -189,8 +189,8 @@ namespace OWASPZAPDotNetAPI
 
         private XmlDocument CallApiRaw(string component, string operationType, string operationName, Dictionary<string, string> parameters)
         {
-            Uri requestUrl = PrepareZapRequest(this.format, component, operationType, operationName, parameters);
-            string responseString = webClient.DownloadString(requestUrl);
+            Uri requestUrl = PrepareZapRequest(this._format, component, operationType, operationName, parameters);
+            string responseString = _webClient.DownloadString(requestUrl);
             XmlDocument responseXmlDocument = new XmlDocument();
             responseXmlDocument.LoadXml(responseString);
             return responseXmlDocument;
@@ -198,18 +198,18 @@ namespace OWASPZAPDotNetAPI
 
         public byte[] CallApiOther(string component, string operationType, string operationName, Dictionary<string, string> parameters)
         {
-            Uri requestUrl = PrepareZapRequest(this.otherFormat, component, operationType, operationName, parameters);
-            byte[] response = webClient.DownloadData(requestUrl);
+            Uri requestUrl = PrepareZapRequest(this._otherFormat, component, operationType, operationName, parameters);
+            byte[] response = _webClient.DownloadData(requestUrl);
             return response;
         }
 
         private Uri PrepareZapRequest(string format, string component, string operationType, string operationName, Dictionary<string, string> parameters)
         {
-            Uri requestUrl = BuildZapRequestUrl(this.apiKey, format, component, operationType, operationName, parameters);
-            string apiKeyValueFromRequestHeader = webClient.GetRequestHeaderValue(this.zapApiKeyHeaderName);
+            Uri requestUrl = BuildZapRequestUrl(this._apiKey, format, component, operationType, operationName, parameters);
+            string apiKeyValueFromRequestHeader = _webClient.GetRequestHeaderValue(this._zapApiKeyHeaderName);
             if (String.IsNullOrWhiteSpace(apiKeyValueFromRequestHeader))
             {
-                webClient.AddRequestHeader(this.zapApiKeyHeaderName, this.apiKey);
+                _webClient.AddRequestHeader(this._zapApiKeyHeaderName, this._apiKey);
             }
             return requestUrl;
         }
@@ -219,8 +219,8 @@ namespace OWASPZAPDotNetAPI
             UriBuilder uriBuilder = new UriBuilder();
 
             uriBuilder.Scheme = "http";
-            uriBuilder.Host = apiDomain;
-            uriBuilder.Port = apiPort;
+            uriBuilder.Host = ApiDomain;
+            uriBuilder.Port = ApiPort;
 
             uriBuilder.Path = new StringBuilder()
                                     .Append(format)
@@ -237,10 +237,13 @@ namespace OWASPZAPDotNetAPI
             {
                 foreach (var parameter in parameters)
                 {
-                    query.Append(Uri.EscapeDataString(parameter.Key));
-                    query.Append("=");
-                    query.Append(Uri.EscapeDataString(parameter.Value));
-                    query.Append("&");
+                    if (parameter.Value != null)
+                    {
+                        query.Append(Uri.EscapeDataString(parameter.Key));
+                        query.Append("=");
+                        query.Append(Uri.EscapeDataString(parameter.Value));
+                        query.Append("&");
+                    }
                 }
             }
 
@@ -259,7 +262,7 @@ namespace OWASPZAPDotNetAPI
 
         public void Dispose()
         {
-            ((IDisposable)webClient).Dispose();
+            ((IDisposable)_webClient).Dispose();
         }
     }
 }
