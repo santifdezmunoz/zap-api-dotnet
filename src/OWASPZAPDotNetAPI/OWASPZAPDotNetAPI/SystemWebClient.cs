@@ -18,7 +18,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 
@@ -88,7 +90,15 @@ namespace OWASPZAPDotNetAPI
 
         public string GetRequestHeaderValue(string headerName)
         {
-            return httpClient.DefaultRequestHeaders.GetValues(headerName).ToString();
+            IEnumerable<string> headerValues = new List<string>();
+            if (httpClient.DefaultRequestHeaders.TryGetValues(headerName, out headerValues))
+            {
+                return headerValues.FirstOrDefault();
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
 
         public void SetRequestHeader(string headerName, string headerValue)
