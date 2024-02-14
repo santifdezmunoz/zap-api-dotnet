@@ -30,8 +30,8 @@ namespace OWASPZAPDotNetAPI
     {
         private IWebClient _webClient;
 
-        private const string ApiDomain = "zap";
-        private const int ApiPort = 80;
+        private readonly string _apiDomain = "zap";
+        private readonly int _apiPort = 80;
 
         private string _apiKey;
         private string _format = "xml";
@@ -86,11 +86,21 @@ namespace OWASPZAPDotNetAPI
         {
             this._apiKey = apiKey;
 
+            if (zapAddress != null && _apiDomain != zapAddress)
+            {
+                _apiDomain = zapAddress;
+            }
+            
+            if (zapPort != 0 && _apiPort != zapPort)
+            {
+                _apiPort = zapPort;
+            }
+            
             _webClient = new SystemWebClient(zapAddress, zapPort);
 
             InitializeApiObjects();
         }
-
+        
         private void InitializeApiObjects()
         {
             //New API needs to be instantiated here, in the same alphabetical order as above
@@ -214,13 +224,13 @@ namespace OWASPZAPDotNetAPI
             return requestUrl;
         }
 
-        private static Uri BuildZapRequestUrl(string apikey, string format, string component, string operationType, string operationName, Dictionary<string, string> parameters)
+        private Uri BuildZapRequestUrl(string apikey, string format, string component, string operationType, string operationName, Dictionary<string, string> parameters)
         {
             UriBuilder uriBuilder = new UriBuilder();
 
             uriBuilder.Scheme = "http";
-            uriBuilder.Host = ApiDomain;
-            uriBuilder.Port = ApiPort;
+            uriBuilder.Host = _apiDomain;
+            uriBuilder.Port = _apiPort;
 
             uriBuilder.Path = new StringBuilder()
                                     .Append(format)
